@@ -2,7 +2,7 @@ jdk:
   - openjdk17
 
 before_install:
-  - chmod +x lib/gradlew
+  - chmod +x gradlew
 
 install:
-  - cd lib && ./gradlew publishToMavenLocal -x test --no-daemon --stacktrace
+  - ./gradlew publishToMavenLocal -x test --no-daemon --stacktrace
