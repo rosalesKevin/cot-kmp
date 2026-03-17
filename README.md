@@ -1,6 +1,6 @@
-# KotCOT
+# cot-kmp
 
-KotCOT is a lightweight Kotlin Multiplatform library for parsing, generating, and transforming Cursor on Target (COT) messages. It targets Android, JVM/Desktop, and JavaScript.
+cot-kmp is a lightweight Kotlin Multiplatform library for parsing, generating, and transforming Cursor on Target (COT) messages. It targets Android, JVM/Desktop, and JavaScript.
 
 ## Targets
 
@@ -56,6 +56,12 @@ val sidc2525C = cotTypeToSidc("a-f-G-U-C", SidcStandard.MIL_STD_2525C)
 val sidc2525D = cotTypeToSidc("a-f-G-U-C", SidcStandard.MIL_STD_2525D)
 ```
 
+Supported SIDC standards in this library:
+
+- MIL-STD-2525B
+- MIL-STD-2525C
+- MIL-STD-2525D
+
 ### Convert SIDC back to COT type
 
 ```kotlin
@@ -66,9 +72,9 @@ val cotType = sidcToCotType("SFGPUC---------")
 
 ## Detail Extensibility
 
-The `CotDetail` model exposes first-class fields for the two most common children (`<contact>` and `<remarks>`). All other child elements — including ATAK-specific extensions like `<__group>`, `<takv>`, and `<status>` — are captured as a `List<DetailElement>` in `CotDetail.children`.
+`CotDetail` gives you simple access to common detail values like contact info and remarks, while still keeping custom detail elements available when you need them.
 
-Each `DetailElement` carries the tag name, a map of attributes, optional text content, and a list of nested children. Values are already XML-unescaped.
+If your messages include ATAK or vendor-specific detail tags, they are preserved in a structured form instead of being discarded.
 
 ```kotlin
 val event = CotParser.parse(xml).getOrThrow()
@@ -85,48 +91,14 @@ val detail = CotDetail(
     callsign = "ALPHA-1",
     children = listOf(
         DetailElement(
-            tag        = "status",
+            tag = "status",
             attributes = mapOf("battery" to "87"),
         ),
     ),
 )
 ```
 
-## Interoperability Contract
-
-### XML parsing
-
-- Input may include or omit an XML declaration (`<?xml version="1.0"?>`).
-- XML entity references (`&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`) are unescaped
-  automatically; special characters in serialized output are always properly escaped.
-- A self-closing `<detail/>` is parsed as an empty `CotDetail` (no children, all
-  fields null) rather than `null`.
-- Unknown `<event>` child elements (anything other than `<point>` and `<detail>`) are
-  skipped without error.
-
-### SIDC round-trip guarantees
-
-| Standard        | Guaranteed lossless                                               | Known lossy cases |
-|-----------------|-------------------------------------------------------------------|-------------------|
-| MIL-STD-2525B   | All 8 affiliations, all 7 dimensions, function + modifier codes   | None |
-| MIL-STD-2525C   | All 8 affiliations, all 7 dimensions, function + modifier codes   | None |
-| MIL-STD-2525D   | All affiliations on GROUND/SPACE/SEA/SUBSURFACE/SOF; hostile-air  | Non-hostile AIR encodes to the same symbol set as GROUND — decodes to GROUND. Friendly/neutral/unknown AIR is lost. JOKER and FAKER share affiliation code `5` with SUSPECT — both decode as SUSPECT. |
-
-**AIR vs GROUND ambiguity in 2525D:** Symbol set `10` is shared by AIR, GROUND, and
-OTHER. The decoder resolves this with an affiliation heuristic: HOSTILE + symbol set 10
-→ AIR; all other affiliations → GROUND. As a result, hostile-air is lossless but
-friendly/neutral/unknown air degrades to GROUND after a 2525D encode→decode cycle.
-
-**JOKER / FAKER in 2525D:** Both are encoded as affiliation code `5` (same as SUSPECT).
-They cannot be recovered from a 2525D SIDC alone; `sidcToCotType` returns `a-s-*`
-(SUSPECT) in all three cases.
-
-### `detail` preservation
-
-- `callsign` and `phone` (from `<contact>`) round-trip exactly.
-- `remarks` text content round-trips exactly, including special characters.
-- All other `<detail>` children are preserved as structured `DetailElement` values and
-  round-trip exactly through parse → serialize → re-parse.
+For more detail about what is preserved and how it round-trips, see [DETAIL_PRESERVATION.md](src/commonMain/kotlin/cot/model/DETAIL_PRESERVATION.md).
 
 ## Error Handling
 
@@ -142,23 +114,25 @@ Examples:
 - `a-h-A`
 - `a-n-S`
 
+For more detail about SIDC support, legacy 2525B interoperability, and known ambiguities, see [SIDC_INTEROP.md](src/commonMain/kotlin/cot/sidc/SIDC_INTEROP.md).
+
 ## Installation
 
-### Via Maven Central *(stable releases — recommended)*
+### Via Maven Central *(stable releases - recommended)*
 
 No extra repository configuration needed.
 
 **Gradle (Kotlin DSL):**
 ```kotlin
 dependencies {
-    implementation("io.github.rosaleskevin:kotcot:0.1.0-alpha01")
+    implementation("io.github.rosaleskevin:cot-kmp:0.1.0-alpha01")
 }
 ```
 
 **Gradle (Groovy):**
 ```groovy
 dependencies {
-    implementation 'io.github.rosaleskevin:kotcot:0.1.0-alpha01'
+    implementation 'io.github.rosaleskevin:cot-kmp:0.1.0-alpha01'
 }
 ```
 
@@ -166,7 +140,7 @@ dependencies {
 ```xml
 <dependency>
     <groupId>io.github.rosaleskevin</groupId>
-    <artifactId>kotcot</artifactId>
+    <artifactId>cot-kmp</artifactId>
     <version>0.1.0-alpha01</version>
 </dependency>
 ```
@@ -175,7 +149,7 @@ dependencies {
 
 ### Via JitPack *(alpha / pre-release versions)*
 
-**Step 1** — Add JitPack to your repositories:
+**Step 1** - Add JitPack to your repositories:
 
 ```kotlin
 // settings.gradle.kts
@@ -188,11 +162,11 @@ dependencyResolutionManagement {
 }
 ```
 
-**Step 2** — Add the dependency:
+**Step 2** - Add the dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.rosalesKevin:kotcot:0.1.0-alpha01")
+    implementation("com.github.rosalesKevin:cot-kmp:0.1.0-alpha01")
 }
 ```
 
@@ -201,13 +175,13 @@ dependencies {
 ### Via npm *(JavaScript / TypeScript)*
 
 ```bash
-npm install kotcot
+npm install cot-kmp
 ```
 
 ---
 
 ## License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 You are free to use, modify, and distribute this library in both open source and
 commercial/proprietary projects with no restrictions beyond attribution.

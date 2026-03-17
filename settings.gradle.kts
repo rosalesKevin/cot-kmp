@@ -1,4 +1,4 @@
-rootProject.name = "kotcot"
+rootProject.name = "cot-kmp"
 
 pluginManagement {
     repositories {

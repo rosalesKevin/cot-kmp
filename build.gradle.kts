@@ -25,23 +25,20 @@ kotlin {
             testTask { enabled = false }
         }
         nodejs()  // runs tests in Node.js via Mocha — no Karma, no browser required
-        // npm package metadata — consumed by JS/TS projects installing kotcot via npm.
-        // `prop()` is defined in Chunk 4 (Task 14); add a TODO comment here so the implementor
-        // knows to revisit after publish.properties is in place. The metadata values below
-        // are safe to hardcode temporarily since they match publish.properties exactly.
+        // npm package metadata — consumed by JS/TS projects installing cot-kmp via npm.
         compilations["main"].packageJson {
-            name        = "kotcot"
+            name        = "cot-kmp"
             version     = "0.1.0-alpha01"
             description = "Lightweight Kotlin Multiplatform library for COT parsing and SIDC conversion."
-            customField("homepage", "https://github.com/rosalesKevin/kotcot")
+            customField("homepage", "https://github.com/rosalesKevin/cot-kmp")
             customField("author",  "Kevin Klein Rosales")
             customField("license", "MIT")
             customField("repository", mapOf(
                 "type" to "git",
-                "url"  to "git+https://github.com/rosalesKevin/kotcot.git",
+                "url"  to "git+https://github.com/rosalesKevin/cot-kmp.git",
             ))
             customField("bugs", mapOf(
-                "url" to "https://github.com/rosalesKevin/kotcot/issues",
+                "url" to "https://github.com/rosalesKevin/cot-kmp/issues",
             ))
         }
         generateTypeScriptDefinitions()
@@ -60,7 +57,7 @@ kotlin {
 }
 
 android {
-    namespace  = "io.github.rosaleskevin.kotcot"
+    namespace  = "io.github.rosaleskevin.cotkmp"
     compileSdk = 35
     defaultConfig {
         minSdk = 21
