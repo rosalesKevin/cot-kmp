@@ -1,5 +1,14 @@
 import com.vanniktech.maven.publish.SonatypeHost
 import java.util.Properties
+import java.nio.file.Files
+import org.gradle.api.DefaultTask
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.model.ObjectFactory
+import org.gradle.api.tasks.InputDirectory
+import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.UntrackedTask
+import org.gradle.process.ExecOperations
+import javax.inject.Inject
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -28,7 +37,7 @@ kotlin {
         // npm package metadata — consumed by JS/TS projects installing cot-kmp via npm.
         compilations["main"].packageJson {
             name        = "cot-kmp"
-            version     = "0.1.0-alpha01"
+            version     = "0.1.0-alpha04"
             description = "Lightweight Kotlin Multiplatform library for COT parsing and SIDC conversion."
             customField("homepage", "https://github.com/rosalesKevin/cot-kmp")
             customField("author",  "Kevin Klein Rosales")
@@ -114,5 +123,60 @@ mavenPublishing {
             connection.set(prop("POM_SCM_CONN"))
             developerConnection.set(prop("POM_SCM_DEV_CONN"))
         }
+    }
+}
+
+// ── JS consumer smoke test ────────────────────────────────────────────────────
+// Run: ./gradlew verifyJsConsumer --no-daemon
+// Builds the npm package, copies it into test-javascript/node_modules/cot-kmp,
+// and runs "npm test" to verify the published JS surface is intact.
+@UntrackedTask(because = "Executes external npm process; always run when invoked")
+abstract class VerifyJsConsumerTask @Inject constructor(
+    private val execOps: ExecOperations,
+    objects: ObjectFactory,
+) : DefaultTask() {
+
+    @get:InputDirectory
+    val srcDir: DirectoryProperty = objects.directoryProperty()
+        .convention(project.layout.buildDirectory.dir("dist/js/productionLibrary"))
+
+    @TaskAction
+    fun run() {
+        val src  = srcDir.get().asFile
+        val dest = project.file("../test-javascript/node_modules/cot-kmp")
+        val destPath = dest.toPath()
+        // Cleanup strategy:
+        // 1. Try Files.delete() first — removes junctions/reparse-points atomically on Windows.
+        // 2. If it fails with DirectoryNotEmptyException it's a real directory; fall back to deleteRecursively().
+        // deleteRecursively() alone would throw "untrusted mount point" when traversing junctions.
+        if (Files.exists(destPath) || Files.isSymbolicLink(destPath)) {
+            try {
+                Files.delete(destPath)
+            } catch (_: java.nio.file.DirectoryNotEmptyException) {
+                dest.deleteRecursively()
+            }
+        }
+        src.copyRecursively(dest, overwrite = true)
+
+        val npmCmd = if (System.getProperty("os.name").lowercase().contains("windows")) "npm.cmd" else "npm"
+        execOps.exec {
+            workingDir(project.file("../test-javascript"))
+            commandLine(npmCmd, "test")
+        }
+    }
+}
+
+tasks.register<VerifyJsConsumerTask>("verifyJsConsumer") {
+    dependsOn("jsNodeProductionLibraryDistribution")
+}
+
+// ── npm README ────────────────────────────────────────────────────────────────
+// Copies README.npm.md into the JS distribution as README.md so that
+// npm shows documentation on the package page after `npm publish`.
+tasks.named("jsNodeProductionLibraryDistribution") {
+    doLast {
+        val src  = project.file("README.npm.md")
+        val dest = layout.buildDirectory.file("dist/js/productionLibrary/README.md").get().asFile
+        src.copyTo(dest, overwrite = true)
     }
 }

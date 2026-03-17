@@ -1,5 +1,10 @@
 # cot-kmp
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.rosaleskevin/cot-kmp?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.rosaleskevin/cot-kmp)
+[![JitPack](https://jitpack.io/v/rosalesKevin/cot-kmp.svg)](https://jitpack.io/#rosalesKevin/cot-kmp)
+[![npm](https://img.shields.io/npm/v/cot-kmp?label=npm)](https://www.npmjs.com/package/cot-kmp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 cot-kmp is a lightweight Kotlin Multiplatform library for parsing, generating, and transforming Cursor on Target (COT) messages. It targets Android, JVM/Desktop, and JavaScript.
 
 ## Targets
@@ -70,6 +75,34 @@ import cot.sidc.sidcToCotType
 val cotType = sidcToCotType("SFGPUC---------")
 ```
 
+### JavaScript quick start
+
+```bash
+npm install cot-kmp
+```
+
+See [README.npm.md](README.npm.md) for the full JavaScript/TypeScript API reference and usage examples.
+
+### Java quick start
+
+```java
+import cot.CotJvmApi;
+import cot.model.CotEvent;
+import cot.sidc.SidcStandard;
+
+String xml = "<event version=\"2.0\" uid=\"UNIT-001\" type=\"a-f-G-U-C\" "
+    + "time=\"2024-01-01T00:00:00.000Z\" start=\"2024-01-01T00:00:00.000Z\" "
+    + "stale=\"2024-01-01T01:00:00.000Z\" how=\"m-g\">"
+    + "<point lat=\"34.0522\" lon=\"-118.2437\" hae=\"71.0\" ce=\"10.0\" le=\"5.0\"/>"
+    + "</event>";
+
+CotEvent event = CotJvmApi.parse(xml);
+String sidc = CotJvmApi.cotTypeToSidc(event.getType(), SidcStandard.MIL_STD_2525C);
+String serialized = CotJvmApi.serialize(event);
+```
+
+All methods throw `IllegalArgumentException` on failure. `CotJvmApi` is available on JVM and Android targets.
+
 ## Detail Extensibility
 
 `CotDetail` gives you simple access to common detail values like contact info and remarks, while still keeping custom detail elements available when you need them.
@@ -125,14 +158,14 @@ No extra repository configuration needed.
 **Gradle (Kotlin DSL):**
 ```kotlin
 dependencies {
-    implementation("io.github.rosaleskevin:cot-kmp:0.1.0-alpha01")
+    implementation("io.github.rosaleskevin:cot-kmp:0.1.0-alpha04")
 }
 ```
 
 **Gradle (Groovy):**
 ```groovy
 dependencies {
-    implementation 'io.github.rosaleskevin:cot-kmp:0.1.0-alpha01'
+    implementation 'io.github.rosaleskevin:cot-kmp:0.1.0-alpha04'
 }
 ```
 
@@ -141,7 +174,7 @@ dependencies {
 <dependency>
     <groupId>io.github.rosaleskevin</groupId>
     <artifactId>cot-kmp</artifactId>
-    <version>0.1.0-alpha01</version>
+    <version>0.1.0-alpha04</version>
 </dependency>
 ```
 
@@ -166,7 +199,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.github.rosalesKevin:cot-kmp:0.1.0-alpha01")
+    implementation("com.github.rosalesKevin:cot-kmp:0.1.0-alpha04")
 }
 ```
 
@@ -178,6 +211,8 @@ dependencies {
 npm install cot-kmp
 ```
 
+See [README.npm.md](README.npm.md) for usage details.
+
 ---
 
 ## License
@@ -185,3 +220,7 @@ npm install cot-kmp
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 You are free to use, modify, and distribute this library in both open source and
 commercial/proprietary projects with no restrictions beyond attribution.
+
+## Acknowledgements
+
+Inspired by [kotcot](https://github.com/cyberpython/kotcot) by cyberpython.
