@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025 Kevin Klein Rosales
+ * Copyright (c) 2026 Kevin Klein Rosales
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,15 +27,21 @@ import kotlinx.serialization.Serializable
 /**
  * Represents the optional `<detail>` block of a COT event.
  *
- * @property callsign Human-readable contact identifier.
- * @property phone Contact phone number if present.
- * @property remarks Free-form remarks if present.
- * @property rawXml Preserved XML for unrecognized detail children.
+ * Known children (`<contact>` and `<remarks>`) are promoted to first-class fields for
+ * convenience. All other children — including vendor-specific ATAK extensions such as
+ * `<__group>`, `<takv>`, and `<status>` — are preserved structurally in [children] so
+ * consumers can inspect or extend them without re-parsing XML.
+ *
+ * @property callsign Human-readable contact identifier (from `<contact callsign="...">`).
+ * @property phone Contact phone number (from `<contact phone="...">`).
+ * @property remarks Free-form remarks (from `<remarks>…</remarks>`).
+ * @property children Structured representation of all other `<detail>` child elements,
+ *   in document order. Replaces the previous `rawXml` string blob.
  */
 @Serializable
 data class CotDetail(
     val callsign: String? = null,
     val phone: String? = null,
     val remarks: String? = null,
-    val rawXml: String? = null,
+    val children: List<DetailElement> = emptyList(),
 )

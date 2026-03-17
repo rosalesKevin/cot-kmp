@@ -6,4 +6,12 @@
 /build/
 /out/
 /local.properties
-/PUBLISHING.md
+/kotlin-js-store/
+*.iml
+.DS_Store
+Thumbs.db
+*.log
+*.keystore
+*.jks
+.env
+.env.*

@@ -3,10 +3,12 @@ kotlin               = "2.3.10"
 agp                  = "8.5.2"
 kotlinx-serialization = "1.6.3"
 maven-publish-plugin  = "0.28.0"
+xmlutil              = "1.0.0-rc2"
 
 [libraries]
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
-kotlin-test                = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlin-test                = { module = "org.jetbrains.kotlin:kotlin-test",                  version.ref = "kotlin" }
+xmlutil-core               = { module = "io.github.pdvrieze.xmlutil:core",                   version.ref = "xmlutil" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform",        version.ref = "kotlin" }

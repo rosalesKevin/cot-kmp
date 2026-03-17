@@ -1,6 +1,6 @@
 # KotCOT
 
-KotCOT is a lightweight Kotlin Multiplatform Cursor on Target library rooted in `lib/`. It targets Android, JVM/Desktop, and JavaScript with shared logic in `commonMain`.
+KotCOT is a lightweight Kotlin Multiplatform library for parsing, generating, and transforming Cursor on Target (COT) messages. It targets Android, JVM/Desktop, and JavaScript.
 
 ## Targets
 
@@ -64,6 +64,70 @@ import cot.sidc.sidcToCotType
 val cotType = sidcToCotType("SFGPUC---------")
 ```
 
+## Detail Extensibility
+
+The `CotDetail` model exposes first-class fields for the two most common children (`<contact>` and `<remarks>`). All other child elements — including ATAK-specific extensions like `<__group>`, `<takv>`, and `<status>` — are captured as a `List<DetailElement>` in `CotDetail.children`.
+
+Each `DetailElement` carries the tag name, a map of attributes, optional text content, and a list of nested children. Values are already XML-unescaped.
+
+```kotlin
+val event = CotParser.parse(xml).getOrThrow()
+val group = event.detail?.children?.firstOrNull { it.tag == "__group" }
+val role  = group?.attributes?.get("role") // e.g. "Team Member"
+```
+
+To add a custom child when building a message:
+
+```kotlin
+import cot.model.DetailElement
+
+val detail = CotDetail(
+    callsign = "ALPHA-1",
+    children = listOf(
+        DetailElement(
+            tag        = "status",
+            attributes = mapOf("battery" to "87"),
+        ),
+    ),
+)
+```
+
+## Interoperability Contract
+
+### XML parsing
+
+- Input may include or omit an XML declaration (`<?xml version="1.0"?>`).
+- XML entity references (`&amp;`, `&lt;`, `&gt;`, `&quot;`, `&apos;`) are unescaped
+  automatically; special characters in serialized output are always properly escaped.
+- A self-closing `<detail/>` is parsed as an empty `CotDetail` (no children, all
+  fields null) rather than `null`.
+- Unknown `<event>` child elements (anything other than `<point>` and `<detail>`) are
+  skipped without error.
+
+### SIDC round-trip guarantees
+
+| Standard        | Guaranteed lossless                                               | Known lossy cases |
+|-----------------|-------------------------------------------------------------------|-------------------|
+| MIL-STD-2525B   | All 8 affiliations, all 7 dimensions, function + modifier codes   | None |
+| MIL-STD-2525C   | All 8 affiliations, all 7 dimensions, function + modifier codes   | None |
+| MIL-STD-2525D   | All affiliations on GROUND/SPACE/SEA/SUBSURFACE/SOF; hostile-air  | Non-hostile AIR encodes to the same symbol set as GROUND — decodes to GROUND. Friendly/neutral/unknown AIR is lost. JOKER and FAKER share affiliation code `5` with SUSPECT — both decode as SUSPECT. |
+
+**AIR vs GROUND ambiguity in 2525D:** Symbol set `10` is shared by AIR, GROUND, and
+OTHER. The decoder resolves this with an affiliation heuristic: HOSTILE + symbol set 10
+→ AIR; all other affiliations → GROUND. As a result, hostile-air is lossless but
+friendly/neutral/unknown air degrades to GROUND after a 2525D encode→decode cycle.
+
+**JOKER / FAKER in 2525D:** Both are encoded as affiliation code `5` (same as SUSPECT).
+They cannot be recovered from a 2525D SIDC alone; `sidcToCotType` returns `a-s-*`
+(SUSPECT) in all three cases.
+
+### `detail` preservation
+
+- `callsign` and `phone` (from `<contact>`) round-trip exactly.
+- `remarks` text content round-trips exactly, including special characters.
+- All other `<detail>` children are preserved as structured `DetailElement` values and
+  round-trip exactly through parse → serialize → re-parse.
+
 ## Error Handling
 
 Parsing and transformation APIs return `Result<T>` for normal failures. Invalid XML, malformed COT type strings, and unsupported SIDC values produce descriptive error messages.
@@ -87,14 +151,14 @@ No extra repository configuration needed.
 **Gradle (Kotlin DSL):**
 ```kotlin
 dependencies {
-    implementation("io.github.rosaleskevin:kotcot:1.0.0")
+    implementation("io.github.rosaleskevin:kotcot:0.1.0-alpha01")
 }
 ```
 
 **Gradle (Groovy):**
 ```groovy
 dependencies {
-    implementation 'io.github.rosaleskevin:kotcot:1.0.0'
+    implementation 'io.github.rosaleskevin:kotcot:0.1.0-alpha01'
 }
 ```
 
@@ -103,7 +167,7 @@ dependencies {
 <dependency>
     <groupId>io.github.rosaleskevin</groupId>
     <artifactId>kotcot</artifactId>
-    <version>1.0.0</version>
+    <version>0.1.0-alpha01</version>
 </dependency>
 ```
 

@@ -16,7 +16,15 @@ kotlin {
     jvm()
 
     js(IR) {
-        browser()
+        // browser() is kept for distribution: it configures the compiled output format
+        // and package.json metadata for npm consumers.
+        // Browser TESTS are disabled: the Karma test runner requires fetching
+        // "github:Kotlin/karma" and fails on Windows (UNKNOWN lstat error in npm/yarn).
+        // Tests run instead via jsNodeTest (see nodejs() below).
+        browser {
+            testTask { enabled = false }
+        }
+        nodejs()  // runs tests in Node.js via Mocha — no Karma, no browser required
         // npm package metadata — consumed by JS/TS projects installing kotcot via npm.
         // `prop()` is defined in Chunk 4 (Task 14); add a TODO comment here so the implementor
         // knows to revisit after publish.properties is in place. The metadata values below
@@ -43,6 +51,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.serialization.core)
+            implementation(libs.xmlutil.core)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

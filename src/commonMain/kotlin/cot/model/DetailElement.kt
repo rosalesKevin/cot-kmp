@@ -20,31 +20,27 @@
  * SOFTWARE.
  */
 
-package cot.util
+package cot.model
 
-private val utcTimestampPattern =
-    Regex("""\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z""")
+import kotlinx.serialization.Serializable
 
 /**
- * Utilities for validating COT UTC timestamps.
+ * Represents a single child element inside the COT `<detail>` block.
+ *
+ * Each element is captured structurally — tag name, attributes, optional text content,
+ * and any nested child elements — so consumers can inspect or manipulate vendor
+ * extensions (e.g. ATAK's `<__group>`, `<takv>`, `<status>`) without parsing raw XML.
+ *
+ * @property tag Local element name (e.g. `"__group"`, `"takv"`).
+ * @property attributes Attribute map for this element; keys and values are already
+ *   XML-unescaped by the parser.
+ * @property text Text content of this element if present, already XML-unescaped.
+ * @property children Nested child elements, preserving document order.
  */
-object CotTimeUtil {
-
-    /**
-     * Returns true when [value] matches the expected COT UTC timestamp format.
-     */
-    fun isUtcTimestamp(value: String): Boolean = utcTimestampPattern.matches(value)
-
-    /**
-     * Returns [value] if it is a valid COT UTC timestamp.
-     *
-     * @throws IllegalArgumentException when the value does not match the expected format.
-     */
-    fun requireUtcTimestamp(value: String, fieldName: String): String {
-        require(isUtcTimestamp(value)) {
-            "Invalid UTC timestamp for '$fieldName'. Expected ISO-8601 UTC like " +
-                "'2024-01-01T00:00:00.000Z', got '$value'."
-        }
-        return value
-    }
-}
+@Serializable
+data class DetailElement(
+    val tag: String,
+    val attributes: Map<String, String> = emptyMap(),
+    val text: String? = null,
+    val children: List<DetailElement> = emptyList(),
+)

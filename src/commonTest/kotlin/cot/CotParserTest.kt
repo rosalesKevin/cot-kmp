@@ -24,7 +24,7 @@ class CotParserTest {
         assertEquals(10.0, event.point.ce)
         assertEquals(5.0, event.point.le)
         assertNotNull(event.detail)
-        val detail = event.detail!!
+        val detail = requireNotNull(event.detail)
         assertEquals("ALPHA-1", detail.callsign)
         assertEquals("555-0100", detail.phone)
         assertEquals("Patrol unit, sector 4", detail.remarks)
@@ -95,14 +95,29 @@ class CotParserTest {
         assertEquals(40.7128, event.point.lat)
         assertEquals(-74.0060, event.point.lon)
         assertNotNull(event.detail)
-        val detail = event.detail!!
+        val detail = requireNotNull(event.detail)
         assertEquals("BRAVO-2", detail.callsign)
         assertEquals("555-0200", detail.phone)
-        assertNotNull(detail.rawXml)
-        val raw = detail.rawXml!!
-        assertTrue(raw.contains("__group"), "rawXml must preserve <__group> element")
-        assertTrue(raw.contains("takv"), "rawXml must preserve <takv> element")
-        assertTrue(raw.contains("status"), "rawXml must preserve <status> element")
+        // Vendor-specific children are preserved as structured DetailElement values
+        assertTrue(detail.children.isNotEmpty(), "detail.children must not be empty")
+        assertTrue(detail.children.any { it.tag == "__group" }, "children must preserve <__group>")
+        assertTrue(detail.children.any { it.tag == "takv" },    "children must preserve <takv>")
+        assertTrue(detail.children.any { it.tag == "status" },  "children must preserve <status>")
+    }
+
+    @Test
+    fun parsesSampleDDetailAttributes() {
+        // Verify that DetailElement attributes are correctly captured
+        val event  = CotParser.parse(SAMPLE_D).getOrThrow()
+        val detail = requireNotNull(event.detail)
+        val group  = detail.children.first { it.tag == "__group" }
+        assertEquals("Cyan",        group.attributes["name"])
+        assertEquals("Team Member", group.attributes["role"])
+
+        val takv = detail.children.first { it.tag == "takv" }
+        assertEquals("Samsung SM-G991B", takv.attributes["device"])
+        assertEquals("ATAK-CIV",         takv.attributes["platform"])
+        assertEquals("4.7.0.8",          takv.attributes["version"])
     }
 
     @Test
@@ -112,11 +127,12 @@ class CotParserTest {
         assertTrue(result.isSuccess)
         val event = result.getOrThrow()
         assertEquals("HOSTILE-002", event.uid)
-        val detail = event.detail!!
+        val detail  = requireNotNull(event.detail)
+        // xmlutil automatically unescapes &amp; → &
         assertEquals("AT&T-TRACK", detail.callsign)
-        val remarks = detail.remarks!!
-        assertTrue(remarks.contains(">"), "remarks must unescape &gt;")
-        assertTrue(remarks.contains("<"), "remarks must unescape &lt;")
+        val remarks = requireNotNull(detail.remarks)
+        assertTrue(remarks.contains(">"),  "remarks must unescape &gt;")
+        assertTrue(remarks.contains("<"),  "remarks must unescape &lt;")
         assertTrue(remarks.contains("\""), "remarks must unescape &quot;")
     }
 
@@ -132,15 +148,18 @@ class CotParserTest {
     }
 
     @Test
-    fun parsesSampleGWithEmptyDetailTag() {
+    fun parsesSampleGWithSelfClosingDetailTag() {
         val result = CotParser.parse(SAMPLE_G)
 
         assertTrue(result.isSuccess)
         val event = result.getOrThrow()
         assertEquals("EMPTY-DETAIL-001", event.uid)
-        // <detail/> has no closing </detail> tag so the detail regex does not match:
-        // absence of a detail block is represented as null.
-        assertNull(event.detail)
+        // <detail/> is a valid empty detail element — parsed as CotDetail with no children.
+        assertNotNull(event.detail)
+        val detail = requireNotNull(event.detail)
+        assertTrue(detail.children.isEmpty())
+        assertNull(detail.callsign)
+        assertNull(detail.remarks)
     }
 
     @Test
@@ -189,16 +208,42 @@ class CotParserTest {
     fun rejectsTruncatedXml() {
         val result = CotParser.parse("<event uid=\"x\" type=\"a-f-G\"")
         assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull()!!.message!!.contains("<event>"))
     }
 
     @Test
     fun rejectsXmlWithNoEventTag() {
         val result = CotParser.parse("<root><point lat=\"0\" lon=\"0\"/></root>")
         assertTrue(result.isFailure)
-        assertTrue(result.exceptionOrNull()!!.message!!.contains("<event>"))
+        assertTrue(result.exceptionOrNull()!!.message!!.contains("event"))
+    }
+
+    @Test
+    fun parsesNestedDetailChildren() {
+        // Verify that deeply nested detail elements are captured recursively
+        val result = CotParser.parse(SAMPLE_H)
+
+        assertTrue(result.isSuccess)
+        val detail      = requireNotNull(result.getOrThrow().detail)
+        val link        = detail.children.first { it.tag == "link" }
+        assertEquals("a-f-G-U-C", link.attributes["type"])
+        // Nested <point> inside <link>
+        val nestedPoint = link.children.firstOrNull { it.tag == "point" }
+        assertNotNull(nestedPoint)
+        assertEquals("34.0522", requireNotNull(nestedPoint).attributes["lat"])
+    }
+
+    @Test
+    fun parsesAposEntityInAttribute() {
+        // Verifies that &apos; (the 5th standard XML entity) is correctly unescaped
+        val result = CotParser.parse(SAMPLE_I)
+
+        assertTrue(result.isSuccess)
+        val callsign = result.getOrThrow().detail?.callsign
+        assertEquals("O'Brien", callsign)
     }
 }
+
+// ── Test fixtures ─────────────────────────────────────────────────────────────
 
 internal val SAMPLE_A =
     """
@@ -231,7 +276,7 @@ internal val SAMPLE_C =
     </event>
     """.trimIndent()
 
-/** Friendly ground infantry unit with ATAK group/takv detail children (rawXml preserved). */
+/** Friendly ground infantry unit with ATAK group/takv/status detail children. */
 internal val SAMPLE_D =
     """
     <event version="2.0" uid="ATAK-001" type="a-f-G-U-C-I"
@@ -261,7 +306,7 @@ internal val SAMPLE_E =
     </event>
     """.trimIndent()
 
-/** Neutral sea-surface vessel — no detail block, type has no function segment. */
+/** Neutral sea-surface vessel — no detail block, XML declaration present. */
 internal val SAMPLE_F =
     """
     <?xml version="1.0" encoding="UTF-8"?>
@@ -272,7 +317,7 @@ internal val SAMPLE_F =
     </event>
     """.trimIndent()
 
-/** COT with empty self-closing <detail/> element. */
+/** COT with self-closing empty <detail/> element. */
 internal val SAMPLE_G =
     """
     <event version="2.0" uid="EMPTY-DETAIL-001" type="a-f-G"
@@ -280,5 +325,33 @@ internal val SAMPLE_G =
       stale="2024-06-15T11:00:00.000Z" how="m-g">
       <point lat="48.8566" lon="2.3522" hae="35.0" ce="15.0" le="8.0"/>
       <detail/>
+    </event>
+    """.trimIndent()
+
+/** COT with a nested detail child — <link> containing a <point> child. */
+internal val SAMPLE_H =
+    """
+    <event version="2.0" uid="LINK-001" type="a-f-G-U-C"
+      time="2024-06-15T10:00:00.000Z" start="2024-06-15T10:00:00.000Z"
+      stale="2024-06-15T11:00:00.000Z" how="m-g">
+      <point lat="34.0100" lon="-118.0000" hae="0.0" ce="10.0" le="5.0"/>
+      <detail>
+        <link type="a-f-G-U-C" relation="p-p">
+          <point lat="34.0522" lon="-118.2437"/>
+        </link>
+      </detail>
+    </event>
+    """.trimIndent()
+
+/** COT with &apos; XML entity in a contact attribute. */
+internal val SAMPLE_I =
+    """
+    <event version="2.0" uid="APOS-001" type="a-f-G"
+      time="2024-06-15T10:00:00.000Z" start="2024-06-15T10:00:00.000Z"
+      stale="2024-06-15T11:00:00.000Z" how="m-g">
+      <point lat="0.0" lon="0.0"/>
+      <detail>
+        <contact callsign="O&apos;Brien"/>
+      </detail>
     </event>
     """.trimIndent()
