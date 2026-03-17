@@ -1,0 +1,9 @@
+/.gradle/
+/.gradle-home/
+/.idea/
+/.kotlin/
+/.tmp/
+/build/
+/out/
+/local.properties
+/PUBLISHING.md

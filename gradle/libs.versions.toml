@@ -1,0 +1,26 @@
+[versions]
+kotlin               = "2.3.10"
+agp                  = "8.5.2"
+kotlinx-serialization = "1.6.3"
+maven-publish-plugin  = "0.28.0"
+
+[libraries]
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinx-serialization" }
+kotlin-test                = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+
+[plugins]
+kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform",        version.ref = "kotlin" }
+android-library      = { id = "com.android.library",                        version.ref = "agp" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+maven-publish        = { id = "com.vanniktech.maven.publish",               version.ref = "maven-publish-plugin" }
+
+[metadata]
+# Project identity — documentation only. Gradle does not parse non-standard catalog sections;
+# machine-readable publish metadata lives in gradle/publish.properties.
+project-name        = "KotCOT"
+project-description = "Lightweight Kotlin Multiplatform library for parsing, generating, and transforming Cursor on Target (COT) messages with MIL-STD-2525C/D SIDC support."
+project-url         = "https://github.com/rosalesKevin/kotcot"
+project-license     = "MIT"
+project-license-url = "https://opensource.org/licenses/MIT"
+project-author      = "Kevin Klein Rosales"
+project-author-url  = "https://github.com/rosalesKevin"
