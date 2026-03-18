@@ -13,6 +13,9 @@ cot-kmp is a lightweight Kotlin Multiplatform library for parsing, generating, a
 - JVM 17+
 - JavaScript Browser (IR)
 
+> **Kotlin version requirement:** This library requires **Kotlin 2.1.x or higher** in your project.
+> It will not load correctly with Kotlin 2.0.x or earlier.
+
 ## Quick Start
 
 ### Parse a COT message
@@ -158,14 +161,14 @@ No extra repository configuration needed.
 **Gradle (Kotlin DSL):**
 ```kotlin
 dependencies {
-    implementation("io.github.rosaleskevin:cot-kmp:0.1.0-alpha04")
+    implementation("io.github.rosaleskevin:cot-kmp:0.1.0-alpha05")
 }
 ```
 
 **Gradle (Groovy):**
 ```groovy
 dependencies {
-    implementation 'io.github.rosaleskevin:cot-kmp:0.1.0-alpha04'
+    implementation 'io.github.rosaleskevin:cot-kmp:0.1.0-alpha05'
 }
 ```
 
@@ -174,7 +177,7 @@ dependencies {
 <dependency>
     <groupId>io.github.rosaleskevin</groupId>
     <artifactId>cot-kmp</artifactId>
-    <version>0.1.0-alpha04</version>
+    <version>0.1.0-alpha05</version>
 </dependency>
 ```
 
@@ -199,7 +202,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.github.rosalesKevin:cot-kmp:0.1.0-alpha04")
+    implementation("com.github.rosalesKevin:cot-kmp:0.1.0-alpha05")
 }
 ```
 

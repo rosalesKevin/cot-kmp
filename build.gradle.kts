@@ -37,7 +37,7 @@ kotlin {
         // npm package metadata — consumed by JS/TS projects installing cot-kmp via npm.
         compilations["main"].packageJson {
             name        = "cot-kmp"
-            version     = "0.1.0-alpha04"
+            version     = "0.1.0-alpha05"
             description = "Lightweight Kotlin Multiplatform library for COT parsing and SIDC conversion."
             customField("homepage", "https://github.com/rosalesKevin/cot-kmp")
             customField("author",  "Kevin Klein Rosales")
