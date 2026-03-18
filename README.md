@@ -1,7 +1,6 @@
 # cot-kmp
 
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.rosaleskevin/cot-kmp?label=Maven%20Central)](https://central.sonatype.com/artifact/io.github.rosaleskevin/cot-kmp)
-[![JitPack](https://jitpack.io/v/rosalesKevin/cot-kmp.svg)](https://jitpack.io/#rosalesKevin/cot-kmp)
 [![npm](https://img.shields.io/npm/v/cot-kmp?label=npm)](https://www.npmjs.com/package/cot-kmp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -179,31 +178,6 @@ dependencies {
     <artifactId>cot-kmp</artifactId>
     <version>0.1.0-alpha05</version>
 </dependency>
-```
-
----
-
-### Via JitPack *(alpha / pre-release versions)*
-
-**Step 1** - Add JitPack to your repositories:
-
-```kotlin
-// settings.gradle.kts
-dependencyResolutionManagement {
-    repositories {
-        google()
-        mavenCentral()
-        maven { url = uri("https://jitpack.io") }
-    }
-}
-```
-
-**Step 2** - Add the dependency:
-
-```kotlin
-dependencies {
-    implementation("com.github.rosalesKevin:cot-kmp:0.1.0-alpha05")
-}
 ```
 
 ---
