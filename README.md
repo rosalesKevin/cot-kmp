@@ -157,21 +157,40 @@ For more detail about SIDC support, legacy 2525B interoperability, and known amb
 
 No extra repository configuration needed.
 
-**Gradle (Kotlin DSL):**
+> **Android projects** must use the `-android` artifact to avoid an AGP dependency analysis bug
+> with KMP module metadata. JVM/Desktop projects use the root artifact.
+
+**Android (Kotlin DSL):**
+```kotlin
+dependencies {
+    implementation("io.github.rosaleskevin:cot-kmp-android:0.1.0-alpha05")
+}
+```
+
+**JVM / Desktop (Kotlin DSL):**
 ```kotlin
 dependencies {
     implementation("io.github.rosaleskevin:cot-kmp:0.1.0-alpha05")
 }
 ```
 
-**Gradle (Groovy):**
+**Gradle (Groovy) — Android:**
 ```groovy
 dependencies {
-    implementation 'io.github.rosaleskevin:cot-kmp:0.1.0-alpha05'
+    implementation 'io.github.rosaleskevin:cot-kmp-android:0.1.0-alpha05'
 }
 ```
 
-**Maven:**
+**Maven — Android:**
+```xml
+<dependency>
+    <groupId>io.github.rosaleskevin</groupId>
+    <artifactId>cot-kmp-android</artifactId>
+    <version>0.1.0-alpha05</version>
+</dependency>
+```
+
+**Maven — JVM:**
 ```xml
 <dependency>
     <groupId>io.github.rosaleskevin</groupId>
